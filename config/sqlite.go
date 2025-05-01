@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/Reydner96/gopportunities/schemas"
 	"gorm.io/driver/sqlite"
@@ -9,22 +10,28 @@ import (
 )
 
 func InitializeSQLite() (*gorm.DB, error) {
-	logger := GetLogger("sqlite")
-	dbPath := "./db/main.db"
+	//logger := GetLogger("sqlite")
+	dbDir := "./db"
+	dbPath := filepath.Join(dbDir, "main.db")
+
 	// Check if  the database file exist
 	_, err := os.Stat(dbPath)
-	if os.IsNotExist(err) {
-		logger.Info("database file not found, creating...")
-		// Create the database file and directory
-		err = os.MkdirAll("./db", os.ModePerm)
-		if err != nil {
+	if err != nil {
+		if os.IsNotExist(err) {
+			logger.Info("database file not found, creating...")
+
+			// Create the database file and directory
+			if err = os.MkdirAll("dbDir", os.ModePerm); err != nil {
+				return nil, err
+			}
+			file, err := os.Create(dbPath)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+		} else {
 			return nil, err
 		}
-		file, err := os.Create(dbPath)
-		if err != nil {
-			return nil, err
-		}
-		file.Close()
 	}
 
 	// Create DB and Connect
@@ -35,8 +42,7 @@ func InitializeSQLite() (*gorm.DB, error) {
 	}
 
 	// Migrate the Schema
-	err = db.AutoMigrate(&schemas.Opening{})
-	if err != nil {
+	if err = db.AutoMigrate(&schemas.Opening{}); err != nil {
 		logger.Errorf("sqlite automigration error: %v", err)
 		return nil, err
 	}
