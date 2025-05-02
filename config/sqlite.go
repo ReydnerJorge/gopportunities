@@ -10,7 +10,7 @@ import (
 
 func InitializeSQLite() (*gorm.DB, error) {
 	logger := GetLogger("sqlite")
-	dbPath := "./db/main/db"
+	dbPath := "../db/main.db"
 	// Check if  the database file exist
 	_, err := os.Stat(dbPath)
 	if os.IsNotExist(err) {
